@@ -1557,7 +1557,7 @@ function App() {
             
             <footer className="bg-slate-900 text-slate-400 py-10 mt-auto">
               <div className="max-w-7xl mx-auto px-4 text-center">
-                <p className="mb-2">© 2025 QualityShop SUT. Built for Automation Testing.</p>
+                <p className="mb-2">© 2025 QualityShop SUT. Built for Automation Testing. By Ankur Raj</p>
                 <p className="text-sm">Use <code className="text-amber-400">data-test-id</code> attributes for all selectors.</p>
               </div>
             </footer>
