@@ -1,13 +1,46 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>demoapp-qa</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualityShop SUT - Enterprise Automation Demo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen flex flex-col">
+
+    <!-- Navbar Placeholder -->
+    <div id="navbar"></div>
+
+    <!-- Main Content Area -->
+    <main id="app" class="flex-grow pb-20"></main>
+
+    <!-- Floating AI Button -->
+    <div id="ai-assistant"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Modals Container -->
+    <div id="modal-container"></div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-10 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="mb-2">© 2025 QualityShop SUT. Built for Automation Testing.</p>
+            <p class="text-sm">Use <code class="text-amber-400">data-test-id</code> attributes for all selectors.</p>
+            <p class="mb-2">Proudly Built by Ankur Raj</p>
+        </div>
+    </footer>
+
+    <!-- MAIN APPLICATION LOGIC -->
+     <script src="script.js"></script>
+</body>
 </html>
