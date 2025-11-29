@@ -1,11 +1,23 @@
-# QualityShop.SUT
+## QualityShop.SUT
 
 A lightweight SUT (System Under Test) built with HTML, CSS, and JavaScript.  
 Used primarily for UI automation practice, demo scenarios, and QA training.
 
+---
+<h3 align="center">Created by </h3>
+<p align="center">
+  <a href="https://github.com/r-ankur2k" target="_blank">
+    <img src="https://avatars.githubusercontent.com/u/124512084?v=4" width="100px" alt="Ankur Raj" />
+    <br/>
+    <h3 align="center">ANKUR RAJ</h3>
+  </a>
+</p>
+
+---
+
 ![Static Badge](https://img.shields.io/badge/Project-SUT-blue)  ![Status](https://img.shields.io/badge/Status-Active-success)  ![HTML](https://img.shields.io/badge/HTML-5-orange)  ![CSS](https://img.shields.io/badge/CSS-3-blue)  ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)  
 
-### Access The site -> https://r-ankur2k.github.io/QualityShop.SUT/
+## Access The site -> https://r-ankur2k.github.io/QualityShop.SUT/
 
 ---
 
