@@ -14,7 +14,19 @@
             { id: 'p12', name: 'Bluetooth Speaker Mini', price: 45.99, category: 'Electronics', rating: 4.2, reviews: 65, stock: 40, image: '🔊', description: 'Powerful sound in a small package.' },
             { id: 'p13', name: 'Leather Wallet', price: 55.00, category: 'Apparel', rating: 4.6, reviews: 90, stock: 60, image: '👛', description: 'Genuine leather, classic design.' },
             { id: 'p14', name: 'Sunglasses - Aviator', price: 89.00, category: 'Apparel', rating: 4.5, reviews: 110, stock: 20, image: '🕶️', description: 'Polarized lenses for UV protection.' },
-            { id: 'p15', name: 'Ceramic Plant Pot', price: 22.50, category: 'Home', rating: 4.8, reviews: 45, stock: 15, image: '🪴', description: 'Minimalist design for indoor plants.' }
+            { id: 'p15', name: 'Ceramic Plant Pot', price: 22.50, category: 'Home', rating: 4.8, reviews: 45, stock: 15, image: '🪴', description: 'Minimalist design for indoor plants.' },
+            { id: 'p16', name: 'Electric Toothbrush', price: 79.99, category: 'Health', rating: 4.9, reviews: 250, stock: 50, image: '🪥', description: 'Removes 10x more plaque.' },
+            { id: 'p17', name: 'Air Fryer', price: 129.99, category: 'Home', rating: 4.7, reviews: 180, stock: 30, image: '🍳', description: 'Crispy food with less oil.' },
+            { id: 'p18', name: 'Scented Candle', price: 19.99, category: 'Home', rating: 4.6, reviews: 120, stock: 100, image: '🕯️', description: 'Relaxing lavender scent.' },
+            { id: 'p19', name: 'Dumbbell Set', price: 49.99, category: 'Sports', rating: 4.8, reviews: 90, stock: 40, image: '🏋️', description: 'Adjustable weights for home gym.' },
+            { id: 'p20', name: 'Digital Camera', price: 499.99, category: 'Electronics', rating: 4.5, reviews: 60, stock: 15, image: '📷', description: '24MP sensor for stunning photos.' },
+            { id: 'p21', name: 'Hardcover Notebook', price: 12.99, category: 'Office', rating: 4.9, reviews: 300, stock: 200, image: '📓', description: '120 pages of high-quality paper.' },
+            { id: 'p22', name: 'Blender', price: 89.99, category: 'Home', rating: 4.6, reviews: 150, stock: 25, image: '🥤', description: 'Perfect for smoothies and shakes.' },
+            { id: 'p23', name: 'Gaming Mouse', price: 59.99, category: 'Electronics', rating: 4.7, reviews: 110, stock: 35, image: '🖱️', description: 'High-precision sensor for gaming.' },
+            { id: 'p24', name: 'Backpack', price: 69.99, category: 'Apparel', rating: 4.8, reviews: 200, stock: 60, image: '🎒', description: 'Durable and spacious for daily use.' },
+            { id: 'p25', name: 'Wall Clock', price: 39.99, category: 'Home', rating: 4.5, reviews: 80, stock: 50, image: '⏰', description: 'Modern design with silent movement.' },
+            { id: 'p26', name: 'Desk Lamp', price: 29.99, category: 'Home', rating: 4.6, reviews: 100, stock: 70, image: '💡', description: 'Adjustable LED light for your workspace.' },
+            { id: 'p27', name: 'Fountain Pen', price: 45.00, category: 'Office', rating: 4.9, reviews: 180, stock: 40, image: '✒️', description: 'A luxurious writing experience.' }
         ];
 
         // --- 2. STATE MANAGEMENT ---
@@ -24,7 +36,7 @@
             cart: [], 
             view: 'login', 
             currentProduct: null,
-            filters: { category: 'All', price: 1000, search: '' },
+            filters: { category: 'All', price: 1000, search: '', sort: 'default' },
             selectedProducts: new Set(),
             checkoutData: { shipping: {}, coupon: null },
             compare: [],
@@ -71,14 +83,30 @@
                     Actions.updateUI();
                 }
             },
-            loginMock: (email) => {
-                const uid = 'mock-' + email.replace(/[^a-zA-Z0-9]/g, '');
-                const name = email.split('@')[0];
-                const role = email.includes('admin') ? 'admin' : 'customer';
-                State.user = { uid, email, displayName: name, role };
-                State.view = 'home';
-                showToast(`Welcome back, ${name}! (Mock Mode)`, 'success');
-                Actions.updateUI();
+            login: (email, password) => {
+                const validUsers = {
+                    "admin@test.com": "password123",
+                    "user@test.com": "password123"
+                };
+
+                const errorElement = document.getElementById('login-error');
+
+                if (validUsers[email] && validUsers[email] === password) {
+                    if (errorElement) {
+                        errorElement.innerHTML = '';
+                    }
+                    const uid = 'mock-' + email.replace(/[^a-zA-Z0-9]/g, '');
+                    const name = email.split('@')[0];
+                    const role = email.includes('admin') ? 'admin' : 'customer';
+                    State.user = { uid, email, displayName: name, role };
+                    State.view = 'home';
+                    showToast(`Welcome back, ${name}!`, 'success');
+                    Actions.updateUI();
+                } else {
+                    if (errorElement) {
+                        errorElement.innerHTML = '<p class="text-red-500 text-sm mt-2">Invalid email or password</p>';
+                    }
+                }
             },
             logout: () => {
                 State.user = null;
@@ -149,8 +177,13 @@
                 Actions.updateUI();
             },
             downloadInvoice: (orderId) => {
+                const key = `mock_orders_${State.user.uid}`;
+                const orders = JSON.parse(localStorage.getItem(key) || '[]');
+                const order = orders.find(o => o.id === orderId);
+                const itemsText = order.items.map(i => `${i.quantity}x ${i.name} - $${(i.price * i.quantity).toFixed(2)}`).join('\n');
+                const invoiceText = `INVOICE #${orderId}\nDate: ${new Date(order.date).toLocaleDateString()}\nStatus: Paid\n\nItems:\n${itemsText}\n\nTotal: $${order.total.toFixed(2)}`;
                 const element = document.createElement("a");
-                const file = new Blob([`INVOICE #${orderId}\nDate: ${new Date().toISOString()}\nStatus: Paid`], {type: 'text/plain'});
+                const file = new Blob([invoiceText], {type: 'text/plain'});
                 element.href = URL.createObjectURL(file);
                 element.download = `Invoice_${orderId}.txt`;
                 document.body.appendChild(element);
@@ -159,6 +192,21 @@
             },
             openComplaintModal: (orderId) => {
                 renderComplaintModal(orderId);
+            },
+            toggleProfileEdit: (isEditing) => {
+                const nameInput = document.getElementById('profile-name');
+                const editContainer = document.getElementById('profile-edit-container');
+                if (isEditing) {
+                    nameInput.readOnly = false;
+                    nameInput.classList.remove('bg-slate-50');
+                    editContainer.innerHTML = `<button onclick="Actions.toggleProfileEdit(false)" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>`;
+                } else {
+                    State.user.displayName = nameInput.value;
+                    nameInput.readOnly = true;
+                    nameInput.classList.add('bg-slate-50');
+                    editContainer.innerHTML = `<button onclick="Actions.toggleProfileEdit(true)" class="bg-indigo-600 text-white px-4 py-2 rounded">Edit</button>`;
+                    Actions.updateUI();
+                }
             },
             openTestDataManager: () => {
                 renderTestDataManager();
@@ -343,9 +391,20 @@
             const filtered = MOCK_PRODUCTS.filter(p => {
                 const matchCat = State.filters.category === 'All' || p.category === State.filters.category;
                 const matchPrice = p.price <= State.filters.price;
-                const matchSearch = p.name.toLowerCase().includes(State.filters.search.toLowerCase());
+                const search = State.filters.search.toLowerCase();
+                const matchSearch = p.name.toLowerCase().includes(search) ||
+                                    p.description.toLowerCase().includes(search) ||
+                                    p.category.toLowerCase().includes(search);
                 return matchCat && matchPrice && matchSearch;
             });
+
+            if (State.filters.sort === 'price-asc') {
+                filtered.sort((a, b) => a.price - b.price);
+            } else if (State.filters.sort === 'price-desc') {
+                filtered.sort((a, b) => b.price - a.price);
+            } else if (State.filters.sort === 'rating-desc') {
+                filtered.sort((a, b) => b.rating - a.rating);
+            }
 
             const idxLast = State.pagination.page * State.pagination.itemsPerPage;
             const idxFirst = idxLast - State.pagination.itemsPerPage;
@@ -361,6 +420,15 @@
                                 <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="filter" size="18"></i> Filters</h3>
                                 <div class="mb-4">
                                     <input type="text" placeholder="Keyword..." class="w-full border p-2 rounded" oninput="Actions.setFilter('search', this.value)" value="${State.filters.search}" data-test-id="search-input">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="font-medium">Sort by</label>
+                                    <select class="w-full border p-2 rounded" onchange="Actions.setFilter('sort', this.value)" data-test-id="sort-select">
+                                        <option value="default" ${State.filters.sort === 'default' ? 'selected' : ''}>Default</option>
+                                        <option value="price-asc" ${State.filters.sort === 'price-asc' ? 'selected' : ''}>Price: Low to High</option>
+                                        <option value="price-desc" ${State.filters.sort === 'price-desc' ? 'selected' : ''}>Price: High to Low</option>
+                                        <option value="rating-desc" ${State.filters.sort === 'rating-desc' ? 'selected' : ''}>Rating: High to Low</option>
+                                    </select>
                                 </div>
                                 <div class="mb-4 space-y-2">
                                     <label class="font-medium">Category</label>
@@ -384,7 +452,7 @@
                             <h2 class="text-2xl font-bold mb-6">Products (${filtered.length})</h2>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-test-id="product-grid">
                                 ${currentItems.map(p => `
-                                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow group relative" data-test-id="product-card-${p.id}">
+                                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow group relative product-card" data-test-id="product-card-${p.id}">
                                         <div class="absolute top-2 left-2 z-10">
                                             <input type="checkbox" ${State.selectedProducts.has(p.id) ? 'checked' : ''} onchange="(function(elId,checked){ if(checked){ State.selectedProducts.add(elId); } else { State.selectedProducts.delete(elId); } Actions.updateUI(); })('${p.id}', this.checked)" data-test-id="select-product-${p.id}">
                                         </div>
@@ -433,8 +501,11 @@
                             <div class="p-6 animate-fadeIn" data-test-id="content-details">
                                 <h3 class="font-bold text-lg mb-4">Personal Information</h3>
                                 <div class="grid gap-4 max-w-md">
-                                    <div><label class="block text-sm text-slate-500">Full Name</label><input type="text" value="${State.user.displayName}" readOnly class="w-full border p-2 rounded bg-slate-50"></div>
+                                    <div><label class="block text-sm text-slate-500">Full Name</label><input type="text" id="profile-name" value="${State.user.displayName}" readOnly class="w-full border p-2 rounded bg-slate-50"></div>
                                     <div><label class="block text-sm text-slate-500">Email</label><input type="text" value="${State.user.email}" readOnly class="w-full border p-2 rounded bg-slate-50"></div>
+                                    <div id="profile-edit-container">
+                                        <button onclick="Actions.toggleProfileEdit(true)" class="bg-indigo-600 text-white px-4 py-2 rounded">Edit</button>
+                                    </div>
                                 </div>
                             </div>
                         ` : ''}
@@ -530,10 +601,11 @@
                 <div class="max-w-4xl mx-auto px-4 py-8" data-test-id="orders-history-page">
                     <h1 class="text-2xl font-bold mb-6">My Orders</h1>
                     <div class="space-y-4">
-                        ${orders.length === 0 ? `<p class="text-slate-500">No orders found.</p>` : orders.map(order => `
+                        ${orders.length === 0 ? `<p class="text-slate-500">No orders found.</p>` : orders.sort((a, b) => b.date.localeCompare(a.date)).map(order => `
                             <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm" data-test-id="order-card-${order.id}">
                                 <div class="flex justify-between items-center mb-4 pb-4 border-b">
                                     <div><p class="font-bold text-sm text-slate-500">ORDER ID</p><p class="font-mono text-slate-800">#${order.id}</p></div>
+                                    <div class="text-right"><p class="font-bold text-sm text-slate-500">DATE</p><p class="font-mono text-slate-800">${new Date(order.date).toLocaleDateString()}</p></div>
                                     <div class="text-right"><span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Paid</span></div>
                                 </div>
                                 <div class="flex justify-between font-bold pt-2">
@@ -541,6 +613,7 @@
                                     <div class="flex gap-2">
                                         <button onclick="Actions.downloadInvoice('${order.id}')" class="text-indigo-600 text-sm hover:underline flex items-center gap-1" data-test-id="download-invoice-${order.id}"><i data-lucide="download" size="14"></i> Invoice</button>
                                         <button onclick="Actions.openComplaintModal('${order.id}')" class="text-red-600 text-sm hover:underline flex items-center gap-1" data-test-id="report-issue-${order.id}"><i data-lucide="message-circle-warning" size="14"></i> Report Issue</button>
+                                        <button onclick="renderOrderTrackingModal('${order.id}')" class="text-blue-600 text-sm hover:underline flex items-center gap-1" data-test-id="track-order-${order.id}"><i data-lucide="truck" size="14"></i> Track Order</button>
                                     </div>
                                 </div>
                             </div>
@@ -657,12 +730,20 @@
             container.innerHTML = `
                 <div class="min-h-[80vh] flex items-center justify-center">
                     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md border" data-test-id="login-form">
-                        <h2 class="text-2xl font-bold mb-6 text-center">Login (Mock Mode)</h2>
+                        <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
                         <form onsubmit="handleLogin(event)" class="space-y-4">
-                            <div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="login-email" required class="w-full border p-2 rounded" data-test-id="input-email" value="user@test.com"></div>
-                            <div><label class="block text-sm font-medium mb-1">Password</label><input type="password" required class="w-full border p-2 rounded" data-test-id="input-password" value="password123"></div>
+                            <div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="login-email" required class="w-full border p-2 rounded" data-test-id="input-email"></div>
+                            <div><label class="block text-sm font-medium mb-1">Password</label><input type="password" id="login-password" required class="w-full border p-2 rounded" data-test-id="input-password"></div>
+                            <div id="login-error"></div>
                             <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded font-medium hover:bg-indigo-700" data-test-id="auth-submit-btn">Sign In</button>
                         </form>
+                        <div class="mt-6 bg-slate-50 p-4 rounded-lg border">
+                            <h3 class="text-sm font-bold text-slate-600 mb-2">Test Credentials</h3>
+                            <div class="text-xs text-slate-500 space-y-2">
+                                <p><strong class="font-medium">Admin:</strong> admin@test.com / password123</p>
+                                <p><strong class="font-medium">User:</strong> user@test.com / password123</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -705,8 +786,19 @@
             if (State.cart.length === 0) { Actions.setView('home'); return; }
             const total = State.cart.reduce((a,i)=>a+i.price*i.quantity,0);
             const couponCode = State.checkoutData.coupon || '';
-            let discount = 0;
-            if (couponCode && couponCode.toUpperCase() === 'DISCOUNT10') discount = 0.10;
+            const couponMap = {
+                'DISCOUNT10': 0.10,
+                'SAVE15': 0.15,
+                'PROMO20': 0.20,
+                'HOLIDAY25': 0.25,
+                'NEWUSER30': 0.30,
+                'FLASH50': 0.50,
+                'BIGSALE60': 0.35,
+                'CLEARANCE70': 0.40,
+                'FINAL80': 0.45,
+                'LASTCHANCE90': 0.50
+            };
+            let discount = couponMap[couponCode] || 0;
             const finalTotal = (total * (1 - discount));
             container.innerHTML = `
                 <div class="max-w-2xl mx-auto py-8 px-4" data-test-id="checkout-page">
@@ -721,29 +813,29 @@
                     <div class="bg-white p-4 rounded mb-4 border" data-test-id="shipping-form">
                         <h3 class="font-bold mb-2">Shipping Address</h3>
                         <div class="grid grid-cols-1 gap-2">
-                            <input id="ship-name" placeholder="Full name" class="border p-2 rounded" data-test-id="ship-name" value="${State.checkoutData.shipping.name||''}">
-                            <input id="ship-address" placeholder="Address" class="border p-2 rounded" data-test-id="ship-address" value="${State.checkoutData.shipping.address||''}">
-                            <input id="ship-city" placeholder="City" class="border p-2 rounded" data-test-id="ship-city" value="${State.checkoutData.shipping.city||''}">
-                            <input id="ship-postal" placeholder="Postal code" class="border p-2 rounded" data-test-id="ship-postal" value="${State.checkoutData.shipping.postal||''}">
-                            <input id="ship-country" placeholder="Country" class="border p-2 rounded" data-test-id="ship-country" value="${State.checkoutData.shipping.country||''}">
+                            <input id="ship-name" placeholder="Full name *" class="border p-2 rounded" data-test-id="ship-name" value="${State.checkoutData.shipping.name||''}">
+                            <input id="ship-address" placeholder="Address *" class="border p-2 rounded" data-test-id="ship-address" value="${State.checkoutData.shipping.address||''}">
+                            <input id="ship-city" placeholder="City *" class="border p-2 rounded" data-test-id="ship-city" value="${State.checkoutData.shipping.city||''}">
+                            <input id="ship-postal" placeholder="Postal code *" class="border p-2 rounded" data-test-id="ship-postal" value="${State.checkoutData.shipping.postal||''}">
+                            <input id="ship-country" placeholder="Country *" class="border p-2 rounded" data-test-id="ship-country" value="${State.checkoutData.shipping.country||''}">
                         </div>
                     </div>
 
                     <div class="bg-white p-4 rounded mb-4 border" data-test-id="coupon-form">
                         <h3 class="font-bold mb-2">Apply Coupon</h3>
                         <div class="flex gap-2">
-                            <input id="coupon-code" placeholder="Enter coupon code (e.g. DISCOUNT10)" class="flex-1 border p-2 rounded" data-test-id="coupon-code" value="${State.checkoutData.coupon||''}">
-                            <button onclick="Actions.applyCoupon(document.getElementById('coupon-code').value)" class="px-3 py-2 bg-amber-500 text-white rounded" data-test-id="apply-coupon-btn">Apply</button>
+                            <input id="coupon-code" placeholder="Enter coupon code" class="flex-1 border p-2 rounded" data-test-id="coupon-code" value="${State.checkoutData.coupon||''}">
+                            <button onclick="Actions.applyCoupon(document.getElementById('coupon-code').value); Actions.updateUI();" class="px-3 py-2 bg-amber-500 text-white rounded" data-test-id="apply-coupon-btn">Apply</button>
                         </div>
                         <div id="coupon-feedback" class="text-sm text-slate-500 mt-2" data-test-id="coupon-feedback"></div>
                     </div>
 
                     <div class="bg-white p-4 rounded mb-4 border" data-test-id="payment-form">
                         <h3 class="font-bold mb-2">Payment (Mock)</h3>
-                        <input id="card-number" placeholder="Card number" class="w-full border p-2 rounded mb-2" data-test-id="card-number">
+                        <input id="card-number" placeholder="Card number *" class="w-full border p-2 rounded mb-2" data-test-id="card-number">
                         <div class="flex gap-2">
-                            <input id="card-exp" placeholder="MM/YY" class="border p-2 rounded flex-1" data-test-id="card-exp">
-                            <input id="card-cvv" placeholder="CVV" class="border p-2 rounded w-24" data-test-id="card-cvv">
+                            <input id="card-exp" placeholder="MM/YY *" class="border p-2 rounded flex-1" data-test-id="card-exp">
+                            <input id="card-cvv" placeholder="CVV *" class="border p-2 rounded w-24" data-test-id="card-cvv">
                         </div>
                     </div>
 
@@ -802,6 +894,7 @@
 
         function renderProductDetail(container) {
             const p = State.currentProduct;
+            const relatedProducts = MOCK_PRODUCTS.filter(rp => rp.category === p.category && rp.id !== p.id).slice(0, 3);
             container.innerHTML = `
                 <div class="max-w-7xl mx-auto px-4 py-10" data-test-id="product-detail-page">
                     <button onclick="Actions.setView('home')" class="mb-4 text-slate-500 hover:text-indigo-600">&larr; Back</button>
@@ -815,6 +908,28 @@
                                 <button onclick="addToCartWrapper('${p.id}')" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700" data-test-id="add-to-cart-btn">Add to Cart</button>
                                 <button onclick="renderReviewModal('${p.id}')" class="flex-1 bg-amber-50 text-amber-700 py-3 rounded-lg font-bold hover:bg-amber-100" data-test-id="open-review-btn">Write Review</button>
                             </div>
+                            <div class="flex gap-3 mt-4">
+                                <a href="https://twitter.com/intent/tweet?url=${window.location.href}&text=Check%20out%20this%20product:%20${p.name}" target="_blank" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300"><i data-lucide="twitter"></i></a>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u=${window.location.href}" target="_blank" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300"><i data-lucide="facebook"></i></a>
+                                <a href="https://pinterest.com/pin/create/button/?url=${window.location.href}&media=${p.image}&description=Check%20out%20this%20product:%20${p.name}" target="_blank" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300"><i data-lucide="pinterest"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-10">
+                        <h2 class="text-2xl font-bold mb-4">Related Products</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${relatedProducts.map(rp => `
+                                <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow group relative product-card" data-test-id="product-card-${rp.id}" onclick="openProductDetail('${rp.id}')">
+                                    <div class="h-48 bg-slate-50 flex items-center justify-center text-6xl cursor-pointer group-hover:bg-indigo-50">${rp.image}</div>
+                                    <div class="p-4">
+                                        <h3 class="font-bold text-lg truncate cursor-pointer hover:text-indigo-600">${rp.name}</h3>
+                                        <div class="flex justify-between items-center mt-4">
+                                            <span class="text-xl font-bold">$${rp.price.toFixed(2)}</span>
+                                            <button onclick="event.stopPropagation(); addToCartWrapper('${rp.id}')" class="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700"><i data-lucide="shopping-cart" size="18"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
@@ -852,12 +967,24 @@
         }
 
         function renderAdmin(container) {
+            const mockSales = Array.from({length: 7}, (_, i) => ({ day: `Day ${i+1}`, revenue: Math.floor(Math.random() * 5000) + 1000 }));
             container.innerHTML = `
                 <div class="max-w-6xl mx-auto px-4 py-8" data-test-id="admin-dashboard">
                     <h1 class="text-3xl font-bold mb-8">Admin Dashboard</h1>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div class="bg-white p-6 rounded shadow border"><h3 class="text-slate-500 font-bold text-sm">Revenue</h3><p class="text-3xl font-bold text-slate-900 mt-2">$12,450</p></div>
                         <div class="bg-white p-6 rounded shadow border"><h3 class="text-slate-500 font-bold text-sm">Active Orders</h3><p class="text-3xl font-bold text-slate-900 mt-2">24</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded shadow border mb-8">
+                        <h2 class="font-bold mb-3">Sales Analytics (Last 7 Days)</h2>
+                        <div class="flex justify-between items-end h-64">
+                            ${mockSales.map(sale => `
+                                <div class="flex flex-col items-center">
+                                    <div class="bg-blue-500" style="height: ${sale.revenue / 50}px; width: 30px;"></div>
+                                    <p class="text-sm mt-2">${sale.day}</p>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                     <div class="bg-white p-6 rounded shadow border">
                         <h2 class="font-bold mb-3">Bulk Import Products (JSON/CSV)</h2>
@@ -929,7 +1056,12 @@
         // --- 5. HELPERS ---
         function openProductDetail(id) { Actions.setView('detail', MOCK_PRODUCTS.find(p => p.id === id)); }
         function addToCartWrapper(id) { Actions.addToCart(MOCK_PRODUCTS.find(x => x.id === id)); }
-        function handleLogin(e) { e.preventDefault(); setTimeout(() => Actions.loginMock(document.getElementById('login-email').value), 600); }
+        function handleLogin(e) { 
+            e.preventDefault(); 
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            setTimeout(() => Actions.login(email, password), 600); 
+        }
         function saveCartToStorage() {
             try {
                 localStorage.setItem('mock_cart', JSON.stringify(State.cart || []));
@@ -939,6 +1071,14 @@
         }
 
         function completeOrder() {
+            const requiredFields = ['ship-name', 'ship-address', 'ship-city', 'ship-postal', 'ship-country', 'card-number', 'card-exp', 'card-cvv'];
+            for (const field of requiredFields) {
+                const element = document.getElementById(field);
+                if (!element || !element.value) {
+                    showToast('Please fill all required fields', 'error');
+                    return;
+                }
+            }
             setTimeout(() => {
                 const total = State.cart.reduce((a,i)=>a+i.price*i.quantity,0);
                 // read shipping fields if present
@@ -990,28 +1130,39 @@
             }, 800);
         }
 
+        /*
+        * Applies a coupon to the cart.
+        * @param {string} code - The coupon code to apply.
+        */
         Actions.applyCoupon = (code) => {
-            const c = (code || '').trim();
-            if (!c) {
-                State.checkoutData.coupon = null;
-                Actions.updateUI();
-                const fb = document.getElementById('coupon-feedback'); if (fb) fb.textContent = 'No coupon applied';
-                return;
-            }
-            if (c.toUpperCase() === 'DISCOUNT10') {
-                State.checkoutData.coupon = c.toUpperCase();
-                Actions.updateUI();
-                const fb = document.getElementById('coupon-feedback'); if (fb) fb.textContent = 'Coupon applied: 10% off';
+            const c = (code || '').trim().toUpperCase();
+            const couponMap = {
+                'DISCOUNT10': 0.10,
+                'SAVE15': 0.15,
+                'PROMO20': 0.20,
+                'HOLIDAY25': 0.25,
+                'NEWUSER30': 0.30,
+                'FLASH50': 0.50,
+                'BIGSALE60': 0.35,
+                'CLEARANCE70': 0.40,
+                'FINAL80': 0.45,
+                'LASTCHANCE90': 0.50
+            };
+
+            const fb = document.getElementById('coupon-feedback');
+
+            if (couponMap[c]) {
+                State.checkoutData.coupon = c;
+                if (fb) fb.textContent = `Coupon applied: ${couponMap[c] * 100}% off`;
             } else {
                 State.checkoutData.coupon = null;
-                Actions.updateUI();
-                const fb = document.getElementById('coupon-feedback'); if (fb) fb.textContent = 'Invalid coupon';
+                if (fb) fb.textContent = 'Invalid coupon';
             }
         };
         function showToast(msg, type) {
             const container = document.getElementById('toast-container');
             const el = document.createElement('div');
-            el.className = `toast ${type === 'success' ? 'bg-green-600' : 'bg-blue-600'} text-white p-4 rounded shadow-lg animate-slideUp`;
+            el.className = `toast ${type === 'success' ? 'bg-green-600' : (type === 'error' ? 'bg-red-600' : 'bg-blue-600')} text-white p-4 rounded shadow-lg animate-slideUp`;
             el.textContent = msg;
             container.appendChild(el);
             setTimeout(() => el.remove(), 3000);
@@ -1074,6 +1225,34 @@
             document.head.appendChild(style);
         }
 
+        function renderOrderTrackingModal(orderId) {
+            const modal = document.getElementById('modal-container');
+            const statuses = ["Order Placed", "Processing", "Shipped", "Delivered"];
+            const currentStatusIndex = Math.floor(Math.random() * statuses.length);
+            modal.innerHTML = `
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" data-test-id="order-tracking-modal">
+                    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                        <h3 class="font-bold text-lg mb-4">Track Order #${orderId}</h3>
+                        <div class="flex justify-between items-center">
+                            ${statuses.map((status, index) => `
+                                <div class="flex flex-col items-center">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center ${index <= currentStatusIndex ? 'bg-green-500' : 'bg-gray-300'}">
+                                        <i data-lucide="check" class="text-white"></i>
+                                    </div>
+                                    <p class="text-sm mt-2">${status}</p>
+                                </div>
+                                ${index < statuses.length - 1 ? '<div class="flex-1 h-1 bg-gray-300"></div>' : ''}
+                            `).join('')}
+                        </div>
+                        <div class="flex justify-end mt-4">
+                            <button onclick="document.getElementById('modal-container').innerHTML=''" class="px-4 py-2 text-slate-600">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
         window.onload = () => { 
             applyCartHoverStyle(); 
             try { State.wishlist = JSON.parse(localStorage.getItem('mock_wishlist') || '[]'); } catch(e) { State.wishlist = []; }
@@ -1092,3 +1271,4 @@
         window.exportData = exportData;
         window.importData = importData;
         window.resetData = resetData;
+        window.renderOrderTrackingModal = renderOrderTrackingModal;
